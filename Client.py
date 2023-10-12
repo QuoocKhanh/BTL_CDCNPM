@@ -5,7 +5,7 @@ from colorama import Fore
 
 def create_socket(h, p):
     sk = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print("socket created")
+    print("Socket created")
     sk.connect((h, p))
     print("Socket connected to %s on port %s" % (host, port))
     return sk
@@ -33,23 +33,19 @@ def start_client(sk):
         if not data:
             break
         print(data)
+        login(sk)
         make_request(sk)
-
         break
-    sk.close()
-    print('Connection close !!!')
+    print('Connection to server closed !!!')
     return
 
 
 def make_request(sk):
-    login(sk)
     while True:
-        print(Fore.CYAN + '(All(1) Board(2) Search(3) Sell(4) Buy(5) History(6) Exit(7)' + Fore.RESET)
+        print(Fore.CYAN + 'All(1) Board(2) Search(3) Sell(4) Buy(5) History(6) Exit(7)' + Fore.RESET)
         req = input('Add request here: ')
         menu(sk, req)
-        # send_req(sk, req)
-        if req == 'Exit':
-            break
+        break
     return
 
 
@@ -76,26 +72,32 @@ def login(sk):
 
 
 def menu(sk, req):
+    if not req.isdigit():
+        make_request(sk)
+
+    if 1 > int(req) or int(req) > 7:
+        make_request(sk)
+
     if req == '1':
         all_item(sk)
 
     if req == '2':
         top_server(sk)
 
-    # if req == '3':
-    #     search_item(sk)
-    #
-    # if req == '4':
-    #     buy_item(sk)
-    #
-    # if req == '5':
-    #     sell_item(sk)
-    #
-    # if req == '6':
-    #     transaction_history(sk)
-    #
-    # if req == '7':
-    #     disconnect(sk)
+    if req == '3':
+        search_item(sk)
+
+    if req == '4':
+        buy_item(sk)
+
+    if req == '5':
+        sell_item(sk)
+
+    if req == '6':
+        transaction_history(sk)
+
+    if req == '7':
+        disconnect(sk)
 
 
 def all_item(sk):
@@ -117,7 +119,8 @@ def all_item(sk):
 
     buying_stock.clear()
     selling_stock.clear()
-    return
+
+    make_request(sk)
 
 
 def top_server(sk):
@@ -130,15 +133,52 @@ def top_server(sk):
     top_spent = top_spent.split('$$')
 
     print(Fore.GREEN + 'Top transaction trader' + Fore.RESET)
-    for a in reversed(top_legit):
+    for a in top_legit:
         print(a)
 
     print(Fore.GREEN + 'Top spent trader' + Fore.RESET)
-    for b in reversed(top_spent):
+    for b in top_spent:
         print(b)
 
     top_legit.clear()
     top_spent.clear()
+
+    make_request(sk)
+
+
+def search_item(sk):
+    send_req(sk, '3')
+    print('SEARCH')
+    trader_name = input('Nhap ten trader: ')
+    name = input('Nhap ten: ')
+
+    req = trader_name + '@@' + name
+    send_req(sk, req)
+    res = recv_res(sk)
+    print(Fore.CYAN + 'FOUND THESE STOCKS: ' + Fore.RESET)
+    lst_stock = res.split('@@')
+    for i in lst_stock:
+        print(i)
+    lst_stock.clear()
+
+    make_request(sk)
+
+
+def buy_item(sk):
+    a = 'nothing here'
+
+
+def sell_item(sk):
+    a = 'nothing here'
+
+
+def transaction_history(sk):
+    a = 'nothing here'
+
+
+def disconnect(sk):
+    send_req(sk, '7')
+    sk.close()
     return
 
 

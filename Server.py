@@ -1,7 +1,6 @@
 import socket
 import pymongo
 
-
 DB_client = pymongo.MongoClient('mongodb://localhost:27017')
 database = DB_client['Trading_Bot']
 stock = database['Stock_4_Trade']
@@ -17,7 +16,6 @@ for x in stock.find({}, {"_id": 0}):
 
 for user in account.find({}, {"_id": 0}):
     lst_user.append(user)
-
 
 
 def create_socket(h, p):
@@ -51,10 +49,11 @@ def start_server(sk):
         send_res(client_sk, 'Hello ' + str(client_addr))
         process_client_request(client_sk)
 
-        client_sk.close()
+        # client_sk.close()
+        print('Connection from ' + str(client_addr) + ' closed !!!')
         break
     sk.close()
-    print('Connection from ' + str(client_addr) + ' closed !!!')
+    print('Server connection closed !!!')
     return
 
 
@@ -64,10 +63,8 @@ def process_client_request(client_sk):
         req = recv_req(client_sk)
         print('Client request: {}'.format(req))
 
-        if req == 'Exit':
-            break
-
         menu(client_sk, req)
+        break
     return
 
 
@@ -94,20 +91,20 @@ def menu(client_sk, req):
     if req == '2':
         top_server(client_sk)
 
-    # if req == '3':
-    #     search_item(client_sk)
-    #
-    # if req == '4':
-    #     buy_item(client_sk)
-    #
-    # if req == '5':
-    #     sell_item(client_sk)
-    #
-    # if req == '6':
-    #     transaction_history(client_sk)
-    #
-    # if req == '7':
-    #     disconnect(client_sk)
+    if req == '3':
+        search_item(client_sk)
+
+    if req == '4':
+        buy_item(client_sk)
+
+    if req == '5':
+        sell_item(client_sk)
+
+    if req == '6':
+        transaction_history(client_sk)
+
+    if req == '7':
+        disconnect(client_sk)
 
 
 def all_item(client_sk):
@@ -139,6 +136,35 @@ def top_server(client_sk):
     send_res(client_sk, dash_board)
 
 
+def search_item(client_sk):
+    lst_search = ''
+    req = recv_req(client_sk)
+    trader_name, name = req.split('@@')
+
+    for x in reversed(lst_Stock):
+        if x['user'] == trader_name or x['name'] == name:
+            lst_search = str(x) + '@@' + lst_search
+    print(lst_search)
+    send_res(client_sk, lst_search)
+
+
+def buy_item(client_sk):
+    a = 'nothing here'
+
+
+def sell_item(client_sk):
+    a = 'nothing here'
+
+
+def transaction_history(client_sk):
+    a = 'nothing here'
+
+
+def disconnect(client_sk):
+    client_sk.close()
+    return
+
+
 if __name__ == '__main__':
     host = 'localhost'
     port = 8050
@@ -146,4 +172,3 @@ if __name__ == '__main__':
     server_sk = create_socket(host, port)
 
     start_server(server_sk)
-
