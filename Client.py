@@ -37,6 +37,7 @@ def start_client(sk):
             break
         print(data)
         client_name = login(sk)
+        client_name = str(client_name)
         make_request(sk, client_name)
         break
     print(Fore.YELLOW + 'Connection to server closed !!!' + Fore.RESET)
@@ -184,7 +185,7 @@ def buy_item(sk, client_name):
     res = recv_res(sk)
 
     if res == 'success':
-        data = str(dict(id=id, name=name, money=money, quantity=quantity))
+        data = str(dict(id=stock_id, name=name, money=money, quantity=quantity))
         print(Fore.GREEN + client_name + ' ' + state + ' ' + data+ ' SUCCESSFUL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
@@ -192,7 +193,7 @@ def buy_item(sk, client_name):
         make_request(sk, client_name)
 
     if res == 'fail':
-        data = str(dict(id=id, name=name, money=money, quantity=quantity))
+        data = str(dict(id=stock_id, name=name, money=money, quantity=quantity))
         print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' FAIL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
@@ -234,7 +235,7 @@ def sell_item(sk, client_name):
     res = recv_res(sk)
 
     if res == 'success':
-        data = str(dict(id=id, name=name, money=money, quantity=quantity))
+        data = str(dict(id=stock_id, name=name, money=money, quantity=quantity))
         print(Fore.GREEN + 'Your order ' + data + ' upload SUCCESSFUL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)

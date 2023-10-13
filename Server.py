@@ -83,7 +83,7 @@ def process_login(client_sk):
         return
     send_res(client_sk, 'fail')
     print('Login fail !')
-    return
+    process_login(client_sk)
 
 
 def menu(client_sk, req):
@@ -195,6 +195,8 @@ def buy_item(client_sk):
                 number_remain = str(int(req['number']) - int(quantity))
                 for a in user_stock.find():
                     if a['user'] == client_name and a['id'] == stock_id and a['name'] == name:
+                        print(a)
+                        print(stock_query)
                         myquery = {'user': client_name, 'id': stock_id, 'name': name}
                         b = int(a['number']) + int(quantity)
                         new_user_value = {'$set': {'number': b}}
@@ -252,32 +254,30 @@ def sell_item(client_sk):
 
     if req != '':
         if data == 'YES':
-            stock_query = {'user': client_name, 'id': stock_id, 'name': name, 'number': quantity}
-
             for x in user_stock.find():
-                if client_name == x['name'] and x['id'] == stock_id and int(x['number']) >= quantity:
+                if client_name == x['user'] and x['id'] == stock_id and x['name'] == name  and int(x['number']) >= int(quantity):
                     myquery = {'user': client_name, 'id': stock_id}
                     number_remain = str(int(x['number']) - int(quantity))
                     new_stock_value = {'$set': {'number': number_remain}}
                     user_stock.update_one(myquery, new_stock_value)
 
-                    myquery = req
+                    myquery = {'user': client_name, 'id': stock_id, 'name': name, 'money': money}
                     number_remain = str(int(x['number']) + int(quantity))
                     new_stock_value = {'$set': {'number': number_remain}}
                     stock.update_one(myquery, new_stock_value)
 
                 send_res(client_sk, 'success')
                 break
-    else:
+    if req == '':
         if data == 'YES':
             for x in user_stock.find():
-                if client_name == x['name'] and x['id'] == stock_id and int(x['number']) >= quantity:
+                if client_name == x['user'] and x['id'] == stock_id and x['name'] == name and int(x['number']) >= int(quantity):
                     myquery = {'user': client_name, 'id': stock_id}
                     number_remain = str(int(x['number']) - int(quantity))
                     new_stock_value = {'$set': {'number': number_remain}}
                     user_stock.update_one(myquery, new_stock_value)
 
-                    myquery = req
+                    myquery = {'user': client_name, 'id': stock_id, 'name': name, 'money': money, 'number': quantity}
                     stock.insert_one(myquery)
 
                 send_res(client_sk, 'success')
