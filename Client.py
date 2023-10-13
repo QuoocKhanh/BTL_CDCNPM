@@ -52,14 +52,6 @@ def make_request(sk, client_name):
     return
 
 
-# def process_server_response(sk):
-#     res = recv_res(sk)
-#     if res == 'success':
-#         return ''
-#     if res == '0':
-#         return 'fail'
-
-
 def login(sk):
     username = input('Username: ')
     password = input('Password: ')
@@ -149,6 +141,10 @@ def search_item(sk, client_name):
 
     req = trader_name + '@@' + name + '@@' + money + '@@' + quantity
     send_req(sk, req)
+
+    if trader_name == 'exit' or name == 'exit' or money == 'exit' or quantity == 'exit':
+        make_request(sk, client_name)
+
     res = recv_res(sk)
     print(Fore.CYAN + 'FOUND THESE STOCKS: ' + Fore.RESET)
     lst_stock = res.split('@@')
@@ -175,6 +171,9 @@ def buy_item(sk, client_name):
         print(Fore.RED + 'Do you miss any fields ?' + Fore.RESET)
         buy_item(sk, client_name)
 
+    if stock_id == 'exit' or name == 'exit' or money == 'exit' or quantity == 'exit':
+        make_request(sk, client_name)
+
     req = client_name + '$' + stock_id + '$' + name + '$' + money + '$' + quantity + '$' + str(utc_time)
     send_req(sk, req)
     res = recv_res(sk)
@@ -186,7 +185,7 @@ def buy_item(sk, client_name):
 
     if res == 'success':
         data = str(dict(id=id, name=name, money=money, quantity=quantity))
-        print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' ' + 'SUCCESSFUL !!!' + Fore.RESET)
+        print(Fore.GREEN + client_name + ' ' + state + ' ' + data+ ' SUCCESSFUL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
 
@@ -194,7 +193,7 @@ def buy_item(sk, client_name):
 
     if res == 'fail':
         data = str(dict(id=id, name=name, money=money, quantity=quantity))
-        print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' ' + 'FAIL !!!' + Fore.RESET)
+        print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' FAIL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
 
@@ -216,6 +215,9 @@ def sell_item(sk, client_name):
         print(Fore.RED + 'Do you miss any fields ?' + Fore.RESET)
         buy_item(sk, client_name)
 
+    if stock_id == 'exit' or name == 'exit' or money == 'exit' or quantity == 'exit':
+        make_request(sk, client_name)
+
     req = client_name + '$' + stock_id + '$' + name + '$' + money + '$' + quantity + '$' + str(utc_time)
     send_req(sk, req)
     res = recv_res(sk)
@@ -233,7 +235,7 @@ def sell_item(sk, client_name):
 
     if res == 'success':
         data = str(dict(id=id, name=name, money=money, quantity=quantity))
-        print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' ' + 'SUCCESSFUL !!!' + Fore.RESET)
+        print(Fore.GREEN + 'Your order ' + data + ' upload SUCCESSFUL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
 
@@ -241,7 +243,7 @@ def sell_item(sk, client_name):
 
     if res == 'fail':
         data = str(dict(id=id, name=name, money=money, quantity=quantity))
-        print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' ' + 'FAIL !!!' + Fore.RESET)
+        print(Fore.GREEN + 'Your order ' + data + ' upload FAIL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
 

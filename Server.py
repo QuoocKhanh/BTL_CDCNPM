@@ -48,9 +48,9 @@ def start_server(sk):
         client_sk, client_addr = sk.accept()
         print('Client address ', client_addr)
         send_res(client_sk, 'Hello ' + str(client_addr))
+        process_login(client_sk)
         process_client_request(client_sk)
 
-        # client_sk.close()
         print('Connection from ' + str(client_addr) + ' closed !!!')
         break
     sk.close()
@@ -59,7 +59,6 @@ def start_server(sk):
 
 
 def process_client_request(client_sk):
-    process_login(client_sk)
     while True:
         req = recv_req(client_sk)
         print('Client request: {}'.format(req))
@@ -119,6 +118,7 @@ def all_item(client_sk):
         all_stock = str(x) + '$$' + all_stock
 
     send_res(client_sk, all_stock)
+    process_client_request(client_sk)
 
 
 def top_server(client_sk):
@@ -135,6 +135,7 @@ def top_server(client_sk):
     dash_board = top_legit + '$!$' + top_spent
 
     send_res(client_sk, dash_board)
+    process_client_request(client_sk)
 
 
 def search_item(client_sk):
@@ -142,6 +143,10 @@ def search_item(client_sk):
     lst_Stock = []
     req = recv_req(client_sk)
     trader_name, name, money, quantity = req.split('@@')
+
+    if trader_name == 'exit' or name == 'exit' or money == 'exit' or quantity == 'exit':
+        process_client_request(client_sk)
+
     for a in stock.find({}, {"_id": 0}):
         lst_Stock.append(a)
 
@@ -150,6 +155,7 @@ def search_item(client_sk):
             lst_search = str(x) + '@@' + lst_search
     print(lst_search)
     send_res(client_sk, lst_search)
+    process_client_request(client_sk)
 
 
 def sub_buy_search(client_sk, stock_id, name, money, quantity):
@@ -165,6 +171,10 @@ def buy_item(client_sk):
 
     req = recv_req(client_sk)
     client_name, stock_id, name, money, quantity, time = req.split('$')
+
+    if stock_id == 'exit' or name == 'exit' or money == 'exit' or quantity == 'exit':
+        process_client_request(client_sk)
+
     total = int(money) * int(quantity) - int(money) * int(quantity) * 5 / 100
     profit = int(money) * int(quantity) * 5 / 100
 
@@ -215,6 +225,7 @@ def buy_item(client_sk):
 
                 send_res(client_sk, 'success')
                 break
+    process_client_request(client_sk)
 
 
 def sub_sell_search(client_sk, stock_id, name, money, quantity):
@@ -229,8 +240,9 @@ def sub_sell_search(client_sk, stock_id, name, money, quantity):
 def sell_item(client_sk):
     req = recv_req(client_sk)
     client_name, stock_id, name, money, quantity, time = req.split('$')
-    total = int(money) * int(quantity) - int(money) * int(quantity) * 5 / 100
-    profit = int(money) * int(quantity) * 5 / 100
+
+    if stock_id == 'exit' or name == 'exit' or money == 'exit' or quantity == 'exit':
+        process_client_request(client_sk)
 
     req = sub_sell_search(client_sk, stock_id, name, money, quantity)
 
@@ -269,6 +281,8 @@ def sell_item(client_sk):
                 send_res(client_sk, 'success')
                 break
 
+    process_client_request(client_sk)
+
 
 def acc_info(client_sk):
     buy_order = ''
@@ -301,6 +315,8 @@ def acc_info(client_sk):
         curr_money) + '!!' + curr_stock + '!!' + buy_order + '!!' + sell_order
 
     send_res(client_sk, client_stock)
+
+    process_client_request(client_sk)
 
 
 def disconnect(client_sk):
