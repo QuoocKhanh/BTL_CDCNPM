@@ -152,7 +152,7 @@ def search_item(client_sk):
     send_res(client_sk, lst_search)
 
 
-def sub_search(client_sk, stock_id, name, money, quantity):
+def sub_buy_search(client_sk, stock_id, name, money, quantity):
 
     for x in stock.find():
         if x['id'] == stock_id and x['name'] == name and x['money'] == money and int(x['number']) >= int(quantity):
@@ -162,13 +162,13 @@ def sub_search(client_sk, stock_id, name, money, quantity):
 
 
 def buy_item(client_sk):
-    trader_name = ''
+
     req = recv_req(client_sk)
     client_name, stock_id, name, money, quantity, time = req.split('$')
     total = int(money) * int(quantity) - int(money) * int(quantity) * 5 / 100
     profit = int(money) * int(quantity) * 5 / 100
 
-    req = sub_search(client_sk, stock_id, name, money, quantity)
+    req = sub_buy_search(client_sk, stock_id, name, money, quantity)
     trader_name = req['user']
 
     data = recv_req(client_sk)
@@ -207,85 +207,67 @@ def buy_item(client_sk):
                 myquery = {'user': client_name, 'state': 'BUY', 'id': stock_id, 'name': name, 'money': money, 'number': quantity, 'total': total, 'profit': profit}
                 success_trade.insert_one(myquery)
 
-                myquery = {'user': client_name, 'state': 'BUY', 'id': stock_id, 'name': name, 'money': money, 'number': quantity, 'total': total, 'trader': trader_name,'time': time}
+                myquery = {'user': client_name, 'state': 'BUY', 'id': stock_id, 'name': name, 'money': money, 'number': quantity, 'total': total, 'trader': trader_name, 'time': time}
                 buy_orders.insert_one(myquery)
+
+                myquery = {'user': trader_name, 'state': 'SELL', 'id': stock_id, 'name': name, 'money': money, 'number': quantity, 'total': total, 'trader': client_name, 'time': time}
+                sell_orders.insert_one(myquery)
 
                 send_res(client_sk, 'success')
                 break
 
 
+def sub_sell_search(client_sk, stock_id, name, money, quantity):
+    for x in stock.find():
+        if x['id'] == stock_id and x['name'] == name and x['money'] == money and int(x['number']) >= 0:
+            send_res(client_sk, 'found')
+            return x
+    send_res(client_sk, 'available')
+    return ''
+
+
 def sell_item(client_sk):
-
     req = recv_req(client_sk)
-    user, state, trader, id, name, money, number, time, confirm = req.split('#SELL#')
-    count = 0
-    c = 0
+    client_name, stock_id, name, money, quantity, time = req.split('$')
+    total = int(money) * int(quantity) - int(money) * int(quantity) * 5 / 100
+    profit = int(money) * int(quantity) * 5 / 100
 
-    if state == 'SELL' and confirm == 'YES' and trader == '':
-        for x in stock.find():
-            if x['user'] == user and x['status'] == 'WTS' and x['id'] == id and x['name'] == name:
-                count += 1
+    req = sub_sell_search(client_sk, stock_id, name, money, quantity)
+
+    data = recv_req(client_sk)
+
+    if req != '':
+        if data == 'YES':
+            stock_query = {'user': client_name, 'id': stock_id, 'name': name, 'number': quantity}
+
+            for x in user_stock.find():
+                if client_name == x['name'] and x['id'] == stock_id and int(x['number']) >= quantity:
+                    myquery = {'user': client_name, 'id': stock_id}
+                    number_remain = str(int(x['number']) - int(quantity))
+                    new_stock_value = {'$set': {'number': number_remain}}
+                    user_stock.update_one(myquery, new_stock_value)
+
+                    myquery = req
+                    number_remain = str(int(x['number']) + int(quantity))
+                    new_stock_value = {'$set': {'number': number_remain}}
+                    stock.update_one(myquery, new_stock_value)
+
+                send_res(client_sk, 'success')
                 break
-        if count == 0:
-            order = dict(user=user, status='WTS', id=id, name=name, money=money, number=number)
+    else:
+        if data == 'YES':
+            for x in user_stock.find():
+                if client_name == x['name'] and x['id'] == stock_id and int(x['number']) >= quantity:
+                    myquery = {'user': client_name, 'id': stock_id}
+                    number_remain = str(int(x['number']) - int(quantity))
+                    new_stock_value = {'$set': {'number': number_remain}}
+                    user_stock.update_one(myquery, new_stock_value)
 
-            stock.insert_one(order)
+                    myquery = req
+                    stock.insert_one(myquery)
 
-            print('ORDER UPLOADED')
-            return 'SUCCESSFUL'
-
-        myquery = {'user': user, 'status': 'WTS', "id": id, 'name': name}
-        newvalues = {"$set": {"money": money, "number": number}}
-
-        stock.update_one(myquery, newvalues)
-        print(user, 'WTS', id, name, money, number)
-        print('ORDER UPDATED')
-        return 'SUCCESSFUL'
-
-    if state == 'SELL' and confirm == 'YES' and trader != '':
-        for x in stock.find():
-            if x['user'] != user and x['status'] == 'WTB' and x['id'] == id and x['name'] == name:
-                number_remain = str(int(x['number']) - int(number))
-                total_money = str(int(money) * int(number))
-
-                print(user, 'WTS', id, name, money, number)
-                print('ORDER CONFIRMED')
-                count += 1
+                send_res(client_sk, 'success')
                 break
-
-        if count == 0:
-            order = dict(user=user, status='WTS', id=id, name=name, money=money, number=number)
-
-            stock.insert_one(order)
-            print('ORDER UPLOADED')
-            return 'SUCCESSFUL'
-
-        myquery = {'user': trader, 'status': 'WTB', "id": id, 'name': name, 'money': money}
-        newvalues = {"$set": {"number": number_remain}}
-        sell_order = dict(user=user, id=id, name=name, money=money, number=number, total=total_money, trader=trader,
-                          time=time)
-
-        stock.update_one(myquery, newvalues)
-        sell_orders.insert_one(sell_order)
-
-        profit = int(total_money) * 5 / 100
-        for a in account.find():
-            if a['name'] == user:
-                point = a['legit_point'] + int(number)
-                cur_money = int(a['current_money']) + int(total_money) - profit
-                break
-
-        myquery = {'name': user}
-        newvalues = {"$set": {"legit_point": point, "current_money": cur_money}}
-        account.update_one(myquery, newvalues)
-
-        transaction = dict(user=user, state=state, id=id, name=name, money=money, number=number, total=total_money,
-                           profit=profit)
-        success_trade.insert_one(transaction)
-
-        total_money = ''
-        number_remain = ''
-        return 'SUCCESSFUL'
 
 
 def acc_info(client_sk):

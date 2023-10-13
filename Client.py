@@ -202,43 +202,50 @@ def buy_item(sk, client_name):
 
 
 def sell_item(sk, client_name):
-
     utc_time = datetime.utcnow()
     curr_time = time.localtime()
     local_time = time.strftime("%H:%M:%S", curr_time)
+    print(Fore.CYAN + 'SELLING...' + Fore.RESET)
 
-    print("SELLING")
-    state = 'SELL'
+    stock_id = input('Stock id: ')
+    name = input('Stock name: ')
+    money = input('Money per stock: ')
+    quantity = input('Quantity: ')
 
-    id = input('Nhap id: ')
-    name = input('Nhap ten: ')
-    money = str(input('Nhap tien: '))
-    number = str(input('Nhap so luong: '))
-
-    if name == '' or id == '' or money == '' or number == '' or not money.isnumeric() or not number.isnumeric():
+    if stock_id == '' or name == '' or money == '' or quantity == '' or not money.isnumeric() or not quantity.isnumeric():
         print(Fore.RED + 'Do you miss any fields ?' + Fore.RESET)
-        sell_item(sk, client_name)
+        buy_item(sk, client_name)
 
-    data = str(dict(trader_name=client_name, id=id, name=name, money=money, number=number))
-    req = client_name + '?' + id + '?' + name + '?' + money + '?' + number
+    req = client_name + '$' + stock_id + '$' + name + '$' + money + '$' + quantity + '$' + str(utc_time)
     send_req(sk, req)
-    msg = recv_res(sk)
-    if msg == 'Available':
-        print(client_name + ' ' + id + ' ' + name + ' ' + money + ' ' + number)
-        print(msg)
-        yesno = confirm_action(state)
-        order_request = client_name + '#SELL#' + state + '#SELL#' + id + '#SELL#' + name + '#SELL#' + money + '#SELL#' + \
-                        number + '#SELL#' + str(utc_time) + '#SELL#' + yesno
+    res = recv_res(sk)
+    if res == 'found':
+        print('Found')
+        state = 'UPDATE'
+        confirm_action(sk, state, client_name)
 
-        send_req(sk, order_request)
-        msg = recv_res(sk)
-        if msg == 'SUCCESSFUL':
-            print(Fore.GREEN + client_name + ' ' + data + ' ' + 'SUCCESSFUL !!!' + Fore.RESET)
+    if res == 'available':
+        print('Available')
+        state = 'SELL'
+        confirm_action(sk, state, client_name)
 
-            print('Local time: ', local_time)
-            print('UTC time: ', utc_time)
+    res = recv_res(sk)
 
-    make_request(sk, client_name)
+    if res == 'success':
+        data = str(dict(id=id, name=name, money=money, quantity=quantity))
+        print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' ' + 'SUCCESSFUL !!!' + Fore.RESET)
+        print('Local time: ', local_time)
+        print('UTC time: ', utc_time)
+
+        make_request(sk, client_name)
+
+    if res == 'fail':
+        data = str(dict(id=id, name=name, money=money, quantity=quantity))
+        print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' ' + 'FAIL !!!' + Fore.RESET)
+        print('Local time: ', local_time)
+        print('UTC time: ', utc_time)
+
+        make_request(sk, client_name)
 
 
 def confirm_action(sk, state, client_name):
