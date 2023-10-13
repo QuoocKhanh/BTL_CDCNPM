@@ -188,6 +188,11 @@ def buy_item(client_sk):
         stock_query = {'user': client_name, 'id': stock_id, 'name': name, 'number': quantity}
 
         for x in account.find():
+            if client_name == x['name'] and int(x['current_money']) < total:
+                res = 'Not enough money !!!'
+                send_res(client_sk, res)
+                process_client_request(client_sk)
+
             if client_name == x['name'] and int(x['current_money']) >= total:
                 money_pay = int(x['current_money']) - total
                 money_get = int(x['current_money']) + total
@@ -195,8 +200,6 @@ def buy_item(client_sk):
                 number_remain = str(int(req['number']) - int(quantity))
                 for a in user_stock.find():
                     if a['user'] == client_name and a['id'] == stock_id and a['name'] == name:
-                        print(a)
-                        print(stock_query)
                         myquery = {'user': client_name, 'id': stock_id, 'name': name}
                         b = int(a['number']) + int(quantity)
                         new_user_value = {'$set': {'number': b}}
@@ -232,13 +235,13 @@ def buy_item(client_sk):
     process_client_request(client_sk)
 
 
-def sub_sell_search(client_sk, stock_id, name, money, quantity):
+def sub_sell_search(client_sk, stock_id, name, money):
     for x in stock.find():
         if x['id'] == stock_id and x['name'] == name and x['money'] == money and int(x['number']) >= 0:
             send_res(client_sk, 'found')
             return x
     send_res(client_sk, 'available')
-    return ''
+    return 'a'
 
 
 def sell_item(client_sk):
@@ -248,14 +251,14 @@ def sell_item(client_sk):
     if stock_id == 'exit' or name == 'exit' or money == 'exit' or quantity == 'exit':
         process_client_request(client_sk)
 
-    req = sub_sell_search(client_sk, stock_id, name, money, quantity)
+    data = sub_sell_search(client_sk, stock_id, name, money)
 
-    data = recv_req(client_sk)
+    req = recv_req(client_sk)
 
-    if req != '':
-        if data == 'YES':
+    if data != 'a':
+        if req == 'YES':
             for x in user_stock.find():
-                if client_name == x['user'] and x['id'] == stock_id and x['name'] == name  and int(x['number']) >= int(quantity):
+                if x['user'] == client_name and x['id'] == stock_id and x['name'] == name and int(x['number']) >= int(quantity):
                     myquery = {'user': client_name, 'id': stock_id}
                     number_remain = str(int(x['number']) - int(quantity))
                     new_stock_value = {'$set': {'number': number_remain}}
@@ -266,12 +269,13 @@ def sell_item(client_sk):
                     new_stock_value = {'$set': {'number': number_remain}}
                     stock.update_one(myquery, new_stock_value)
 
-                send_res(client_sk, 'success')
-                break
-    if req == '':
-        if data == 'YES':
+                    send_res(client_sk, 'success')
+                    break
+
+    if data == 'a':
+        if req == 'YES':
             for x in user_stock.find():
-                if client_name == x['user'] and x['id'] == stock_id and x['name'] == name and int(x['number']) >= int(quantity):
+                if x['user'] == client_name and x['id'] == stock_id and x['name'] == name and int(x['number']) >= int(quantity):
                     myquery = {'user': client_name, 'id': stock_id}
                     number_remain = str(int(x['number']) - int(quantity))
                     new_stock_value = {'$set': {'number': number_remain}}
@@ -280,8 +284,8 @@ def sell_item(client_sk):
                     myquery = {'user': client_name, 'id': stock_id, 'name': name, 'money': money, 'number': quantity}
                     stock.insert_one(myquery)
 
-                send_res(client_sk, 'success')
-                break
+                    send_res(client_sk, 'success')
+                    break
 
     process_client_request(client_sk)
 

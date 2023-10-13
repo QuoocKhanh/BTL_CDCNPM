@@ -182,13 +182,18 @@ def buy_item(sk, client_name):
         print('Found')
         confirm_action(sk, state, client_name)
 
+    if res == 'Not enough money !!!':
+        print(Fore.RED + res + Fore.RESET)
+        make_request(sk, client_name)
+
     res = recv_res(sk)
 
     if res == 'success':
         data = str(dict(id=stock_id, name=name, money=money, quantity=quantity))
-        print(Fore.GREEN + client_name + ' ' + state + ' ' + data+ ' SUCCESSFUL !!!' + Fore.RESET)
+        print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' SUCCESSFUL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
+        print(' ')
 
         make_request(sk, client_name)
 
@@ -197,6 +202,7 @@ def buy_item(sk, client_name):
         print(Fore.GREEN + client_name + ' ' + state + ' ' + data + ' FAIL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
+        print(' ')
 
         make_request(sk, client_name)
 
@@ -221,6 +227,7 @@ def sell_item(sk, client_name):
 
     req = client_name + '$' + stock_id + '$' + name + '$' + money + '$' + quantity + '$' + str(utc_time)
     send_req(sk, req)
+    print(req)
     res = recv_res(sk)
     if res == 'found':
         print('Found')
@@ -233,12 +240,14 @@ def sell_item(sk, client_name):
         confirm_action(sk, state, client_name)
 
     res = recv_res(sk)
+    print(res)
 
     if res == 'success':
         data = str(dict(id=stock_id, name=name, money=money, quantity=quantity))
         print(Fore.GREEN + 'Your order ' + data + ' upload SUCCESSFUL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
+        print(' ')
 
         make_request(sk, client_name)
 
@@ -247,6 +256,7 @@ def sell_item(sk, client_name):
         print(Fore.GREEN + 'Your order ' + data + ' upload FAIL !!!' + Fore.RESET)
         print('Local time: ', local_time)
         print('UTC time: ', utc_time)
+        print(' ')
 
         make_request(sk, client_name)
 
