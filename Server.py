@@ -1,5 +1,6 @@
 import socket
 import pymongo
+import threading
 
 DB_client = pymongo.MongoClient('mongodb://localhost:27017')
 database = DB_client['Trading_Bot']
@@ -43,17 +44,18 @@ def recv_req(client_sk):
     return req
 
 
-def start_server(sk):
-    while True:
-        client_sk, client_addr = sk.accept()
-        print('Client address ', client_addr)
-        send_res(client_sk, 'Hello ' + str(client_addr))
-        process_login(client_sk)
-        process_client_request(client_sk)
+def start_server():
+    server_sk = create_socket(host, port)
 
-        print('Connection from ' + str(client_addr) + ' closed !!!')
-        break
-    sk.close()
+    client_sk, client_addr = server_sk.accept()
+    print('Client address ', client_addr)
+    send_res(client_sk, 'Hello ' + str(client_addr))
+    process_login(client_sk)
+    process_client_request(client_sk)
+
+    print('Connection from ' + str(client_addr) + ' closed !!!')
+
+    server_sk.close()
     print('Server connection closed !!!')
     return
 
@@ -328,6 +330,4 @@ if __name__ == '__main__':
     host = 'localhost'
     port = 8050
 
-    server_sk = create_socket(host, port)
-
-    start_server(server_sk)
+    start_server()
